@@ -74,7 +74,10 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTag, setActiveTag] = useState(null);
   const [newTagInput, setNewTagInput] = useState("");
+  const [localTitle, setLocalTitle] = useState("");
+  const [localContent, setLocalContent] = useState("");
   const textareaRef = useRef(null);
+  const titleInputRef = useRef(null);
 
   // Save dark mode to localStorage
   useEffect(() => {
@@ -111,6 +114,27 @@ export default function Home() {
 
   const activeNote = notes.find((note) => note.id === activeNoteId) || notes[0];
 
+  // Sync local state when active note changes
+  useEffect(() => {
+    setLocalTitle(activeNote?.title || "");
+    setLocalContent(activeNote?.content || "");
+  }, [activeNote?.id]);
+
+  // Debounce updateNote to prevent too frequent calls and cursor jumping
+  useEffect(() => {
+    if (!activeNote) return;
+    const timeoutId = setTimeout(() => {
+      if (
+        localTitle !== activeNote.title ||
+        localContent !== activeNote.content
+      ) {
+        updateNote(activeNote.id, { title: localTitle, content: localContent });
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [localTitle, localContent, activeNote?.id]);
+
   const addTag = (tag) => {
     if (!tag.trim() || (activeNote.tags || []).includes(tag)) return;
     updateNote(activeNote.id, { tags: [...(activeNote.tags || []), tag] });
@@ -123,12 +147,12 @@ export default function Home() {
   };
 
   const exportMarkdown = () => {
-    const content = `# ${activeNote?.title || "Untitled"}\n\n${activeNote?.content || ""}`;
+    const content = `# ${localTitle || "Untitled"}\n\n${localContent || ""}`;
     const blob = new Blob([content], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${activeNote?.title || "untitled"}.md`;
+    a.download = `${localTitle || "untitled"}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -152,7 +176,7 @@ export default function Home() {
     const textarea = textareaRef.current;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const text = textarea.value;
+    const text = localContent;
     let newText = "";
     let newCursor = start;
 
@@ -212,7 +236,7 @@ export default function Home() {
         break;
     }
 
-    updateNote(activeNote.id, { content: newText });
+    setLocalContent(newText);
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(newCursor, newCursor);
@@ -570,7 +594,7 @@ export default function Home() {
                     setActiveNoteId(note.id);
                     setIsSidebarOpen(false);
                   }}
-                  className={`p-4 cursor-pointer border-b transition-all ${
+                  className={`px-6 py-4 cursor-pointer border-b transition-all ${
                     isDarkMode
                       ? "border-slate-700 hover:bg-slate-800"
                       : "border-slate-200 hover:bg-slate-100"
@@ -703,11 +727,10 @@ export default function Home() {
               </div>
             </div>
             <input
+              ref={titleInputRef}
               type="text"
-              value={activeNote?.title || ""}
-              onChange={(e) =>
-                updateNote(activeNote.id, { title: e.target.value })
-              }
+              value={localTitle}
+              onChange={(e) => setLocalTitle(e.target.value)}
               placeholder="Note title..."
               className={`px-4 py-3 text-lg font-semibold border-b ${
                 isDarkMode
@@ -762,10 +785,8 @@ export default function Home() {
             </div>
             <textarea
               ref={textareaRef}
-              value={activeNote?.content || ""}
-              onChange={(e) =>
-                updateNote(activeNote.id, { content: e.target.value })
-              }
+              value={localContent}
+              onChange={(e) => setLocalContent(e.target.value)}
               placeholder="Start writing in Markdown..."
               className={`flex-1 w-full p-4 resize-none focus:outline-none ${
                 isDarkMode
@@ -843,7 +864,7 @@ export default function Home() {
                 }`}
               >
                 <ReactMarkdown>
-                  {activeNote?.content ||
+                  {localContent ||
                     "# Start writing...\n\nYour Markdown will appear here!"}
                 </ReactMarkdown>
               </div>
