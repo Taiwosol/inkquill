@@ -566,7 +566,10 @@ export default function Home() {
               {filteredNotes.map((note) => (
                 <div
                   key={note.id}
-                  onClick={() => setActiveNoteId(note.id)}
+                  onClick={() => {
+                    setActiveNoteId(note.id);
+                    setIsSidebarOpen(false);
+                  }}
                   className={`p-4 cursor-pointer border-b transition-all ${
                     isDarkMode
                       ? "border-slate-700 hover:bg-slate-800"
