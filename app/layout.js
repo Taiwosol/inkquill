@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Ink & Quill",
+  title: "InkQuill",
   description: "A modern Markdown note-taking app",
   manifest: "/manifest.json",
 };

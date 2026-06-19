@@ -23,8 +23,11 @@ import {
   Download,
   Copy,
   Bold,
+  Italic,
   Heading1,
   Heading2,
+  List,
+  Image as ImageIcon,
   Link,
 } from "lucide-react";
 import { useNotes } from "../lib/useNotes";
@@ -41,11 +44,20 @@ export default function Home() {
     user,
     signUp,
     signIn,
-    signOut,
+    signOut: originalSignOut,
     resetPassword,
     continueWithoutSignIn,
     loading,
   } = useNotes();
+
+  const signOut = async () => {
+    setEmail("");
+    setPassword("");
+    setAuthError("");
+    setResetSuccess("");
+    setAuthMode("login");
+    await originalSignOut();
+  };
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
@@ -154,6 +166,15 @@ export default function Home() {
           text.slice(end);
         newCursor = end + 2;
         break;
+      case "italic":
+        newText =
+          text.slice(0, start) +
+          "*" +
+          text.slice(start, end) +
+          "*" +
+          text.slice(end);
+        newCursor = end + 1;
+        break;
       case "h1":
         newText =
           text.slice(0, start) +
@@ -172,6 +193,21 @@ export default function Home() {
         break;
       case "link":
         newText = text.slice(0, start) + "[Text](url)" + text.slice(end);
+        newCursor = start + 1;
+        break;
+      case "image":
+        newText =
+          text.slice(0, start) + "![Alt text](image-url)" + text.slice(end);
+        newCursor = start + 2;
+        break;
+      case "table":
+        newText =
+          text.slice(0, start) +
+          `| Header 1 | Header 2 | Header 3 |
+| -------- | -------- | -------- |
+| Cell 1   | Cell 2   | Cell 3   |
+| Cell 4   | Cell 5   | Cell 6   |` +
+          text.slice(end);
         newCursor = start + 1;
         break;
     }
@@ -201,7 +237,7 @@ export default function Home() {
         <div className="w-full max-w-md">
           <div className="flex items-center gap-2 justify-center mb-8">
             <FileText size={36} className="text-blue-500" />
-            <h1 className="text-3xl font-bold">Ink & Quill</h1>
+            <h1 className="text-3xl font-bold">InkQuill</h1>
           </div>
 
           <div
@@ -388,13 +424,13 @@ export default function Home() {
       className={`flex flex-col h-screen ${isDarkMode ? "bg-slate-900 text-slate-100" : "bg-white text-slate-900"}`}
     >
       <header
-        className={`flex items-center justify-between px-6 py-4 border-b ${
+        className={`flex items-center justify-between px-4 py-3 border-b ${
           isDarkMode
             ? "border-slate-700 bg-slate-900"
             : "border-slate-200 bg-white"
         }`}
       >
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 rounded-lg hover:opacity-80"
@@ -402,10 +438,10 @@ export default function Home() {
             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <div className="flex items-center gap-2">
-            <FileText size={24} className="text-blue-500" />
-            <h1 className="text-xl font-bold">Ink & Quill</h1>
+            <FileText size={20} className="text-blue-500" />
+            <h1 className="text-lg font-bold">InkQuill</h1>
           </div>
-          <div className="flex items-center gap-2 ml-6">
+          <div className="hidden md:flex items-center gap-2 ml-4">
             {isOnline ? (
               <Wifi size={16} className="text-green-400" />
             ) : (
@@ -415,11 +451,13 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <User size={20} />
-            <span className="text-sm font-medium">{user.email}</span>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className="p-2 rounded-lg hover:opacity-80"
+          >
+            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
           <button
             onClick={signOut}
             className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-slate-800" : "hover:bg-slate-100"}`}
@@ -427,19 +465,21 @@ export default function Home() {
           >
             <LogOut size={20} />
           </button>
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 rounded-lg hover:opacity-80"
-          >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
+              <User size={18} />
+              <span className="text-sm font-medium truncate max-w-[120px]">
+                {user.email}
+              </span>
+            </div>
+          </div>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {isSidebarOpen && (
           <aside
-            className={`w-72 border-r flex flex-col ${
+            className={`w-full sm:w-72 border-r flex flex-col absolute sm:relative z-10 h-full ${
               isDarkMode
                 ? "border-slate-700 bg-slate-900"
                 : "border-slate-200 bg-slate-50"
@@ -571,8 +611,8 @@ export default function Home() {
           </aside>
         )}
 
-        <main className="flex-1 flex overflow-hidden">
-          <div className="w-1/2 flex flex-col border-r overflow-hidden">
+        <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          <div className="w-full md:w-1/2 flex flex-col border-b md:border-b-0 md:border-r overflow-hidden">
             <div
               className={`px-4 py-3 border-b flex items-center justify-between ${
                 isDarkMode
@@ -604,6 +644,15 @@ export default function Home() {
                   <Bold size={16} />
                 </button>
                 <button
+                  onClick={() => insertMarkdown("italic")}
+                  className={`p-2 rounded-lg hover:opacity-80 ${
+                    isDarkMode ? "text-slate-300" : "text-slate-700"
+                  }`}
+                  title="Italic"
+                >
+                  <Italic size={16} />
+                </button>
+                <button
                   onClick={() => insertMarkdown("h1")}
                   className={`p-2 rounded-lg hover:opacity-80 ${
                     isDarkMode ? "text-slate-300" : "text-slate-700"
@@ -622,6 +671,15 @@ export default function Home() {
                   <Heading2 size={16} />
                 </button>
                 <button
+                  onClick={() => insertMarkdown("table")}
+                  className={`p-2 rounded-lg hover:opacity-80 ${
+                    isDarkMode ? "text-slate-300" : "text-slate-700"
+                  }`}
+                  title="Table"
+                >
+                  <List size={16} />
+                </button>
+                <button
                   onClick={() => insertMarkdown("link")}
                   className={`p-2 rounded-lg hover:opacity-80 ${
                     isDarkMode ? "text-slate-300" : "text-slate-700"
@@ -629,6 +687,15 @@ export default function Home() {
                   title="Link"
                 >
                   <Link size={16} />
+                </button>
+                <button
+                  onClick={() => insertMarkdown("image")}
+                  className={`p-2 rounded-lg hover:opacity-80 ${
+                    isDarkMode ? "text-slate-300" : "text-slate-700"
+                  }`}
+                  title="Image"
+                >
+                  <ImageIcon size={16} />
                 </button>
               </div>
             </div>
@@ -705,7 +772,7 @@ export default function Home() {
             />
           </div>
 
-          <div className="w-1/2 flex flex-col overflow-hidden">
+          <div className="w-full md:w-1/2 flex flex-col overflow-hidden">
             <div
               className={`px-4 py-3 border-b flex items-center justify-between ${
                 isDarkMode
@@ -763,7 +830,7 @@ export default function Home() {
               </div>
             </div>
             <div
-              className={`flex-1 p-8 overflow-y-auto ${
+              className={`flex-1 p-4 md:p-8 overflow-y-auto ${
                 isDarkMode ? "bg-slate-900" : "bg-white"
               }`}
             >
