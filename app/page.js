@@ -80,6 +80,7 @@ export default function Home() {
   const [localContent, setLocalContent] = useState("");
   const textareaRef = useRef(null);
   const titleInputRef = useRef(null);
+  const previewScrollRef = useRef(null);
 
   // Save dark mode to localStorage
   useEffect(() => {
@@ -120,6 +121,13 @@ export default function Home() {
   useEffect(() => {
     setLocalTitle(activeNote?.title || "");
     setLocalContent(activeNote?.content || "");
+    // Reset scroll positions
+    if (previewScrollRef.current) {
+      previewScrollRef.current.scrollTop = 0;
+    }
+    if (textareaRef.current) {
+      textareaRef.current.scrollTop = 0;
+    }
   }, [activeNote?.id]);
 
   // Debounce updateNote to prevent too frequent calls and cursor jumping
@@ -881,6 +889,7 @@ export default function Home() {
               </div>
             </div>
             <div
+              ref={previewScrollRef}
               className={`flex-1 p-4 md:p-8 overflow-y-auto ${
                 isDarkMode ? "bg-slate-900" : "bg-white"
               }`}

@@ -11,6 +11,10 @@ const withPWA = withPWAInit({
 const nextConfig = {
   reactCompiler: true,
   webpack: true,
+  experimental: {
+    scrollRestoration: true,
+    appNewScrollHandler: true,
+  },
 };
 
 export default withPWA(nextConfig);
