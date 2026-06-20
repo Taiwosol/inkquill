@@ -48,6 +48,7 @@ export default function Home() {
     resetPassword,
     continueWithoutSignIn,
     loading,
+    authLoading,
   } = useNotes();
 
   const signOut = async () => {
@@ -69,6 +70,7 @@ export default function Home() {
   const [authMode, setAuthMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState("");
   const [resetSuccess, setResetSuccess] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -335,7 +337,7 @@ export default function Home() {
                 <div>
                   <label className="block mb-2 font-medium">Password</label>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className={`w-full px-4 py-3 rounded border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -345,13 +347,30 @@ export default function Home() {
                     }`}
                     required
                   />
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="showPassword"
+                      checked={showPassword}
+                      onChange={(e) => setShowPassword(e.target.checked)}
+                      className="rounded"
+                    />
+                    <label
+                      htmlFor="showPassword"
+                      className="text-sm cursor-pointer"
+                    >
+                      Show password
+                    </label>
+                  </div>
                 </div>
               )}
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors"
+                disabled={authLoading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
               >
+                {authLoading && <Loader2 className="w-5 h-5 animate-spin" />}
                 {authMode === "login"
                   ? "Sign In"
                   : authMode === "signup"
@@ -484,10 +503,15 @@ export default function Home() {
           </button>
           <button
             onClick={signOut}
-            className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-slate-800" : "hover:bg-slate-100"}`}
+            disabled={authLoading}
+            className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-slate-800" : "hover:bg-slate-100"} flex items-center gap-1`}
             title="Sign Out"
           >
-            <LogOut size={20} />
+            {authLoading ? (
+              <Loader2 size={20} className="animate-spin" />
+            ) : (
+              <LogOut size={20} />
+            )}
           </button>
           <div className="hidden sm:flex items-center gap-2">
             <div className="hidden md:flex items-center gap-2">
@@ -511,7 +535,10 @@ export default function Home() {
           >
             <div className="p-4">
               <button
-                onClick={addNote}
+                onClick={() => {
+                  addNote();
+                  setIsSidebarOpen(false);
+                }}
                 className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-all mb-3 ${
                   isDarkMode
                     ? "bg-blue-600 hover:bg-blue-700 text-white"
