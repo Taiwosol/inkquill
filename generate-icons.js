@@ -1,8 +1,9 @@
 const fs = require("fs");
 const path = require("path");
+const sharp = require("sharp");
 
-function createIcon(size) {
-  const svg = `
+function createIconSVG(size) {
+  return `
     <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
       <rect width="${size}" height="${size}" fill="#1e293b"/>
       <rect x="${size * 0.2}" y="${size * 0.2}" width="${size * 0.6}" height="${size * 0.6}" rx="${size * 0.05}" fill="#3b82f6"/>
@@ -11,20 +12,36 @@ function createIcon(size) {
       <rect x="${size * 0.25}" y="${size * 0.47}" width="${size * 0.3}" height="${size * 0.03}" fill="#ffffff" opacity="0.6"/>
     </svg>
   `;
-  return svg;
 }
 
-const icons = [
-  { size: 192, filename: "icon-192.svg" },
-  { size: 512, filename: "icon-512.svg" },
+const iconSizes = [
+  16, 32, 48, 64, 72, 96, 128, 144, 152, 192, 256, 384, 512
 ];
 
-icons.forEach((icon) => {
-  const svgContent = createIcon(icon.size);
-  fs.writeFileSync(
-    path.join(__dirname, "public", icon.filename),
-    svgContent.trim()
-  );
-});
+async function generateIcons() {
+  console.log("Generating icons...");
 
-console.log("SVG icons generated! To convert to PNG, you can use a tool like svgexport.");
+  for (const size of iconSizes) {
+    const svgContent = createIconSVG(size);
+    const svgBuffer = Buffer.from(svgContent.trim());
+    
+    // Save SVG
+    if (size === 192 || size === 512) {
+      fs.writeFileSync(
+        path.join(__dirname, "public", `icon-${size}.svg`),
+        svgContent.trim()
+      );
+    }
+    
+    // Save PNG
+    await sharp(svgBuffer)
+      .png()
+      .toFile(path.join(__dirname, "public", `icon-${size}.png`));
+    
+    console.log(`Generated icon-${size}.png`);
+  }
+
+  console.log("All icons generated successfully!");
+}
+
+generateIcons().catch(console.error);
