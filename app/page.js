@@ -50,6 +50,40 @@ export default function Home() {
     loading,
     authLoading,
   } = useNotes();
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setShowInstallButton(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    // Check if app is already installed
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setShowInstallButton(false);
+    }
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") {
+      setShowInstallButton(false);
+      setInstallPrompt(null);
+    }
+  };
 
   const signOut = async () => {
     setEmail("");
@@ -455,7 +489,7 @@ export default function Home() {
               )}
               <button
                 onClick={continueWithoutSignIn}
-                className={`w-full py-3 rounded-lg font-medium transition-all ${
+                className={`w-full py-3 rounded-lg font-medium transition-all mb-3 ${
                   isDarkMode
                     ? "border border-slate-600 text-slate-300 hover:bg-slate-800"
                     : "border border-slate-300 text-slate-700 hover:bg-slate-100"
@@ -463,6 +497,36 @@ export default function Home() {
               >
                 Continue Without Signing In
               </button>
+
+              {/* Install Button Area */}
+              {showInstallButton ? (
+                <button
+                  onClick={handleInstall}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium transition-all"
+                >
+                  <Download size={18} />
+                  Install InkQuill
+                </button>
+              ) : (
+                <div
+                  className={`w-full p-4 rounded-lg text-center text-sm ${
+                    isDarkMode
+                      ? "bg-slate-800 border border-slate-700 text-slate-400"
+                      : "bg-slate-100 border border-slate-200 text-slate-600"
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Download size={14} />
+                    <span className="font-medium">
+                      Install InkQuill as a native app!
+                    </span>
+                  </div>
+                  <p className="text-xs">
+                    Look for the install icon in your browser's address bar or
+                    use browser menu &gt; Install App.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -503,6 +567,15 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-2">
+          {showInstallButton && (
+            <button
+              onClick={handleInstall}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium text-sm transition-all"
+            >
+              <Download size={16} />
+              Install
+            </button>
+          )}
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className="p-2 rounded-lg hover:opacity-80"

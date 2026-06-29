@@ -4,13 +4,22 @@ const withPWA = withPWAInit({
   dest: "public",
   register: true,
   skipWaiting: true,
-  disable: false, // Keep enabled for testing in development
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
+  disable: false,
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
+  reloadOnOnline: false,
   swcMinify: true,
+  exclude: [
+    ({ asset }) => {
+      // Exclude files that cause constant recompiles
+      return (
+        asset.name.startsWith("server/") ||
+        asset.name.endsWith(".hot-update.js")
+      );
+    },
+  ],
   workboxOptions: {
-    disableDevLogs: false,
+    disableDevLogs: true,
   },
 });
 
